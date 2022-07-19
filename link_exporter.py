@@ -1,4 +1,3 @@
-#!/usr/local/python3.8/bin/python3.8
 import json,asyncio,aiohttp
 from flask import Response, Flask
 
@@ -26,13 +25,17 @@ async def get_node_height(node_height):
             await task
 
 app = Flask(__name__)
+
 @app.route('/favicon.ico')
 def favicon():
     return '', 204
+
 @app.route("/metrics")
 def metrics():
     node_height = ["# HELP node_height 节点高度\n","# TYPE node_height gauge\n"]
     asyncio.run(get_node_height(node_height))
     return Response(''.join(node_height).encode('utf-8'),mimetype="text/plain")
+
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=9926)
