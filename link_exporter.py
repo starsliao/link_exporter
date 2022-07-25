@@ -16,7 +16,9 @@ async def post(session, node, node_height):
     node_height.append(f'node_height{{node="{node}",id="1",method="cfx_epochNumber",jsonrpc="2.0"}} {result}\n')
 
 async def get_node_height(node_height):
-    async with aiohttp.ClientSession() as session:
+    timeout = aiohttp.ClientTimeout(total=7)
+    conn = aiohttp.TCPConnector(ssl=False)
+    async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
         tasks = []
         for node in node_list:
             task = asyncio.create_task(post(session, node, node_height))
