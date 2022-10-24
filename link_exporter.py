@@ -1,27 +1,31 @@
 import json,asyncio,aiohttp
 from flask import Response, Flask
 
-node_list = ['main.confluxrpc.com', 'main.confluxrpc.org']
-headers = {'Content-Type': 'application/json'}
-data = { "jsonrpc": "2.0", "method": "cfx_epochNumber", "params": [], "id": 1 }
+host_info = {"https://main.confluxrpc.com":"cfx_epochNumber",
+             "https://main.confluxrpc.org":"cfx_epochNumber",
+             "https://eth-mainnet.g.alchemy.com/v2/cmlKon8xAj75Cv7s9nObf4BsnoVDTTmX":"eth_blockNumber"
+            }
 
-async def post(session, node, node_height):
-    url = f'https://{node}/'
+headers = {'Content-Type': 'application/json'}
+
+
+async def post(session, url, method, node_height):
+    data = { "jsonrpc": "2.0", "method": method, "params": [], "id": 1 }
     try:
         async with session.post(url,headers=headers, data=json.dumps(data)) as resp:
             height = await resp.json()
             result = int(height['result'],16)
     except:
         result = 0
-    node_height.append(f'node_height{{node="{node}",id="1",method="cfx_epochNumber",jsonrpc="2.0"}} {result}\n')
+    node_height.append(f'node_height{{node="{url}",id="1",method="{method}",jsonrpc="2.0"}} {result}\n')
 
 async def get_node_height(node_height):
     timeout = aiohttp.ClientTimeout(total=7)
     conn = aiohttp.TCPConnector(ssl=False)
     async with aiohttp.ClientSession(timeout=timeout, connector=conn) as session:
         tasks = []
-        for node in node_list:
-            task = asyncio.create_task(post(session, node, node_height))
+        for url,method in host_info.items():
+            task = asyncio.create_task(post(session, url, method, node_height))
             tasks.append(task)
         for task in tasks:
             await task
